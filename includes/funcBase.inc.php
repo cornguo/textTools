@@ -5,18 +5,18 @@ define("FILEOPT", FILE_IGNORE_NEW_LINES|FILE_SKIP_EMPTY_LINES);
 
 function getBaseDir()
 {
-	$basedir = '.';
-	$pre = "";
-	for($i = 0; $i < 5; $i++)
-	{
-		if(is_dir("{$pre}includes") && is_file("{$pre}includes/funcBase.inc.php"))
-		{
-			$basedir = "{$pre}includes";
-			break;
-		}
-		else $pre .= "../";
-	}
-	return $basedir;
+    $basedir = '.';
+    $pre = "";
+    for($i = 0; $i < 5; $i++)
+    {
+        if(is_dir("{$pre}includes") && is_file("{$pre}includes/funcBase.inc.php"))
+        {
+            $basedir = "{$pre}includes";
+            break;
+        }
+        else $pre .= "../";
+    }
+    return $basedir;
 }
 
 getBaseDir();
