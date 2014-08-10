@@ -76,8 +76,7 @@ function POS2Array($text) {
     return $output;
 }
 
-function POSArray2Text($posArr)
-{
+function POSArray2Text($posArr) {
     $output = '';
     if (!isset($posArr['text'])) {
         foreach ($posArr as $sentData) {
