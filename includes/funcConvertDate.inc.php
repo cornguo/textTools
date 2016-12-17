@@ -11,7 +11,9 @@ function convertDate($dateString, $timestamp)
         "([0-9])\[10\]([0-9])", "\[([123])0\]([0-9])", "([0-9])\[[123](0)\]", "\[10\]"
     );
 
-    foreach($pattern as $k => $v) $pattern[$k] = "/{$v}/u";
+    foreach ($pattern as $k => $v) {
+        $pattern[$k] = "/{$v}/u";
+    }
 
     $replace = array(
         "", "0", "0",
@@ -27,62 +29,64 @@ function convertDate($dateString, $timestamp)
 
     $cnt = 0;
 
-    if(!preg_match("/[大今明昨前後去這上下個本周週禮拜]/u", $dateReplaced))
+    if (!preg_match("/[大今明昨前後去這上下個本周週禮拜]/u", $dateReplaced)) {
         $cnt = preg_match_all("/(?P<type>[中華民國公西元國曆農曆]+)?((?P<num>[0-9]+)(?P<unit>[年月日]))/u", $dateReplaced, $match);
-    else
+    } else {
         $cnt = preg_match_all("/(?P<shift>[大今明昨前後去這上下個本]{1,2})??(?P<shiftunit>[年月日天周週早午晚]{1}上?)((?P<month>[0-9]{1,2})月)??((?P<day>[0-9]{1,2})日)??(?P<weekday>[1-6日])??(?P<shiftdir>[前後])??/Uu", $dateReplaced, $match);
+    }
 
-    if($cnt == 0) return $dateString;
+    if (0 === $cnt) {
+        return $dateString;
+    }
 
     $output = "";
 
-    if(isset($match['num']))
-    {
+    if (isset($match['num'])) {
         $tmp = array(
                '年' => -1,
                '月' => -1,
                '日' => -1,
         );
-        foreach($match['num'] as $k => $v)
-        {
-            if((isset($match['type'][$k]) && strstr($match['type'][$k], "民") !== FALSE)
-                || ($match['unit'][$k] == '年' && $v <= 100)) $v += 1911;
+        foreach ($match['num'] as $k => $v) {
+            if ((isset($match['type'][$k]) && false !== strstr($match['type'][$k], "民"))
+                || ('年' === $match['unit'][$k] && $v <= 100)) $v += 1911;
             $tmp[$match['unit'][$k]] = $v;
         }
 
-        if($tmp['年'] == -1 && $tmp['月'] == -1)
-        {
+        if (-1 === $tmp['年'] && -1 ===  $tmp['月']) {
             $tmp['年'] = date("Y", $timestamp);
             $tmp['月'] = date("m", $timestamp);
             $thisMonth = strtotime("{$tmp['年']}-{$tmp['月']}-{$tmp['日']}");
             $nextMonth = strtotime("{$tmp['年']}-" . $tmp['月']+1 . "-{$tmp['日']}");
             $lastMonth = strtotime("{$tmp['年']}-" . $tmp['月']-1 . "-{$tmp['日']}");
-            if(abs($nextMonth - $timestamp) < abs($thisMonth - $timestamp)) $tmp['月']++;
-            if(abs($lastMonth - $timestamp) < abs($thisMonth - $timestamp)) $tmp['月']--;
+            if (abs($nextMonth - $timestamp) < abs($thisMonth - $timestamp)) $tmp['月']++;
+            if (abs($lastMonth - $timestamp) < abs($thisMonth - $timestamp)) $tmp['月']--;
             $tmp['年'] += intval($tmp['月'] / 12);
             $tmp['月'] %= 12;
         }
 
-        if($tmp['年'] == -1)
-        {
+        if (-1 === $tmp['年']) {
             $tmp['年'] = date("Y", $timestamp);
-            if($tmp['日'] == -1) $tmp['日'] = 1;
+            if (-1 === $tmp['日']) $tmp['日'] = 1;
             $thisYear = strtotime("{$tmp['年']}-{$tmp['月']}-{$tmp['日']}");
             $nextYear = strtotime($tmp['年']+1 . "-{$tmp['月']}-{$tmp['日']}");
             $lastYear = strtotime($tmp['年']-1 . "-{$tmp['月']}-{$tmp['日']}");
-            if(abs($nextYear - $timestamp) < abs($thisYear - $timestamp)) $tmp['年']++;
-            if(abs($lastYear - $timestamp) < abs($thisYear - $timestamp)) $tmp['年']--;
+            if (abs($nextYear - $timestamp) < abs($thisYear - $timestamp)) $tmp['年']++;
+            if (abs($lastYear - $timestamp) < abs($thisYear - $timestamp)) $tmp['年']--;
         }
 
-        if($tmp['月'] == -1) $tmp['月'] = 1;
-        if($tmp['日'] == -1) $tmp['日'] = 1;
+        if (-1 === $tmp['月']) {
+            $tmp['月'] = 1;
+        }
+
+        if (-1 === $tmp['日']) {
+            $tmp['日'] = 1;
+        }
 
         //print_r($tmp);
 
         $output = strtotime("{$tmp['年']}-{$tmp['月']}-{$tmp['日']}");
-    }
-    else
-    {
+    } else {
         $convStr = "";
         $sub = array(
             "大前" => "-3 ",
@@ -154,24 +158,34 @@ function convertDate($dateString, $timestamp)
         $convTimestamp = $timestamp;
         $lastWord = preg_replace("/^.*(.)$/Uu", "$1", $dateString);
         //echo "CHECK: {$lastWord}\n";
-        if($lastWord == '年') $convTimestamp = strtotime(date("Y-1-1", $timestamp));
-        if($lastWord == '月') $convTimestamp = strtotime(date("Y-m-1", $timestamp));
+        if ('年' === $lastWord) {
+            $convTimestamp = strtotime(date("Y-1-1", $timestamp));
+        }
+        if ('月' === $lastWord) {
+            $convTimestamp = strtotime(date("Y-m-1", $timestamp));
+        }
 
 
-        if(isset($match['day'][0]) && strlen($match['day'][0]) > 0)
+        if (isset($match['day'][0]) && strlen($match['day'][0]) > 0) {
             $convStr = preg_replace("/(.*)-(.*)-.*/Uu", "$1-$2-{$match['day'][0]}");
+        }
 
         $output = strtotime("$convStr", $convTimestamp);
     }
 
-    if($output === FALSE) return $dateString;
+    if (false === $output) {
+        return $dateString;
+    }
+
     $output = date("Y-m-d", $output);
-if(defined("DEBUG"))
-{
-    echo "{$dateString} (" . date("Y-m-d", $timestamp) .  ") => $dateReplaced";
-    if(isset($convStr)) echo " => {$convStr} (" . date("Y-m-d", $convTimestamp) . ")";
-    echo " => {$output}\n";
-}
+
+    if (defined("DEBUG")) {
+        echo "{$dateString} (" . date("Y-m-d", $timestamp) .  ") => $dateReplaced";
+        if (isset($convStr)) {
+            echo " => {$convStr} (" . date("Y-m-d", $convTimestamp) . ")";
+        }
+        echo " => {$output}\n";
+    }
     return $output;
 }
 
